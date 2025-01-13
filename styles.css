@@ -1,0 +1,12 @@
+.controls {
+    margin: 20px 0;
+}
+
+.control-group {
+    margin: 10px 0;
+}
+
+label {
+    display: inline-block;
+    width: 120px;
+}
