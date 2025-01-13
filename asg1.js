@@ -1,15 +1,36 @@
+// Vertex shader program
+var VSHADER_SOURCE =
+  'attribute vec4 a_Position;\n' +
+  'uniform float u_Size;\n' +
+  'void main() {\n' +
+  '  gl_Position = a_Position;\n' +
+  '  gl_PointSize = u_Size;\n' +
+  '}\n';
+
+// Fragment shader program
+var FSHADER_SOURCE =
+  'precision mediump float;\n' +
+  'uniform vec4 u_FragColor;\n' +
+  'void main() {\n' +
+  '  vec2 distance = 2.0 * gl_PointCoord - 1.0;\n' +
+  '  if (length(distance) > 1.0) {\n' +
+  '      discard;\n' +
+  '  }\n' +
+  '  gl_FragColor = u_FragColor;\n' +
+  '}\n';
+
 // Global variables
-let gl;
-let canvas;
-let a_Position;
-let u_FragColor;
-let u_Size;
-let currentMode = 'point';
-let shapesList = [];
-let currentColor = [1.0, 0.0, 0.0, 1.0];
-let currentSize = 10.0;
-let segments = 12;
-let isDrawing = false;
+var gl;
+var canvas;
+var a_Position;
+var u_FragColor;
+var u_Size;
+var shapesList = [];
+var currentMode = 'point';
+var currentColor = [1.0, 0.0, 0.0, 1.0];
+var currentSize = 10.0;
+var segments = 12;
+var isDrawing = false;
 
 function main() {
     setupWebGL();
@@ -23,7 +44,7 @@ function main() {
 
 function setupWebGL() {
     canvas = document.getElementById('webgl');
-    gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+    gl = WebGLUtils.setupWebGL(canvas, { preserveDrawingBuffer: true });
     if (!gl) {
         console.log('Failed to get WebGL context');
         return;
@@ -32,7 +53,7 @@ function setupWebGL() {
 
 function connectVariablesToGLSL() {
     if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-        console.log('Failed to initialize shaders');
+        console.log('Failed to initialize shaders.');
         return;
     }
     
@@ -69,9 +90,16 @@ function handleMouseMove(ev) {
 }
 
 function addShape(x, y) {
+    const color = [
+        document.getElementById('redSlider').value / 100,
+        document.getElementById('greenSlider').value / 100,
+        document.getElementById('blueSlider').value / 100,
+        1.0
+    ];
+
     switch (currentMode) {
         case 'point':
-            shapesList.push(new Point([x, y], currentColor, currentSize));
+            shapesList.push(new Point([x, y], color, currentSize));
             break;
         case 'triangle':
             const size = currentSize / 100;
@@ -79,10 +107,10 @@ function addShape(x, y) {
                 x, y + size,
                 x - size, y - size,
                 x + size, y - size
-            ], currentColor, currentSize));
+            ], color, currentSize));
             break;
         case 'circle':
-            shapesList.push(new Circle([x, y], currentColor, currentSize, segments));
+            shapesList.push(new Circle([x, y], color, currentSize, segments));
             break;
     }
 }
@@ -101,7 +129,19 @@ function setMode(mode) {
     currentMode = mode;
 }
 
+function updateSize() {
+    currentSize = document.getElementById('sizeSlider').value;
+}
+
 function updateColor() {
     currentColor = [
         document.getElementById('redSlider').value / 100,
-        
+        document.getElementById('greenSlider').value / 100,
+        document.getElementById('blueSlider').value / 100,
+        1.0
+    ];
+}
+
+function updateSegments() {
+    segments = document.getElementById('segmentsSlider').value;
+}

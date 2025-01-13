@@ -1,7 +1,8 @@
-class Triangle extends Shape {
+class Triangle {
     constructor(vertices, color, size) {
-        super(color, size);
         this.vertices = vertices;
+        this.color = color;
+        this.size = size;
     }
 
     render() {
