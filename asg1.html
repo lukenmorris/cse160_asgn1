@@ -3,46 +3,70 @@
   <head>
     <meta charset="utf-8" />
     <title>Assignment 1</title>
+    <style>
+        .controls {
+            margin: 20px 0;
+        }
+        .control-group {
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+        }
+    </style>
   </head>
 
   <body onload="main()">
     <canvas id="webgl" width="400" height="400">
-    Please use a browser that supports "canvas"
+      Please use a browser that supports "canvas"
     </canvas>
+    
+    <div class="controls">
+      <div class="control-group">
+        <button onclick="clearCanvas()">Clear Canvas</button>
+      </div>
+      
+      <div class="control-group">
+        <label>Drawing Mode:</label>
+        <input type="radio" name="mode" value="point" checked onclick="setMode('point')"> Points
+        <input type="radio" name="mode" value="triangle" onclick="setMode('triangle')"> Triangles
+        <input type="radio" name="mode" value="circle" onclick="setMode('circle')"> Circles
+      </div>
 
-    <br>
-    <p>
-        <button type="button" id="clear">Clear Canvas</button>
-    </p>
-
-    <p>
-        <button type="button" id="drawingButton">Draw Face</button>
-    </p>
-    <p>
-        Shape:
-        <button type="button" id="pointButton">Point</button>
-        <button type="button" id="triglButton">Triangle</button>
-        <button type="button" id="circlButton">Circle</button>
-        <button type="button" id="bgButton">Background</button>
-    </p>
-
-    <p>
-        Color:
-        Red <input type="range" id="redSlide" value="100"> <br>
-        Green <input type="range" id="greSlide" value="100"> <br>
-        Blue <input type="range" id="bluSlide" value="100"> <br>
-        Alpha <input type="range" id="alpSlide" value="100"> <br>
-        Size <input type="range" id="sizeSlide" value="5"> <br>
-        Segments <input type="range" id="sideSlide" value="3" min="3" max="30">
-        <div id="numside">3</div>
-    </p>
+      <div class="control-group">
+        <label>Red:</label>
+        <input type="range" min="0" max="100" value="100" id="redSlider" oninput="updateColor()">
+      </div>
+      
+      <div class="control-group">
+        <label>Green:</label>
+        <input type="range" min="0" max="100" value="0" id="greenSlider" oninput="updateColor()">
+      </div>
+      
+      <div class="control-group">
+        <label>Blue:</label>
+        <input type="range" min="0" max="100" value="0" id="blueSlider" oninput="updateColor()">
+      </div>
+      
+      <div class="control-group">
+        <label>Shape Size:</label>
+        <input type="range" min="1" max="50" value="10" id="sizeSlider" oninput="updateSize()">
+      </div>
+      
+      <div class="control-group">
+        <label>Circle Segments:</label>
+        <input type="range" min="3" max="36" value="12" id="segmentsSlider" oninput="updateSegments()">
+      </div>
+    </div>
 
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/webgl-debug.js"></script>
     <script src="lib/cuon-utils.js"></script>
-    <script src="js/shapes/Point.js"></script>
-    <script src="js/shapes/Triangle.js"></script>
-    <script src="js/shapes/Circle.js"></script>
+    <script src="lib/cuon-matrix-cse160.js"></script>
+    <script src="js/Point.js"></script>
+    <script src="js/Triangle.js"></script>
+    <script src="js/Circle.js"></script>
     <script src="asg1.js"></script>
   </body>
 </html>
