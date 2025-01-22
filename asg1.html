@@ -14,6 +14,11 @@
             display: inline-block;
             width: 120px;
         }
+        .reference-pdf {
+            margin-top: 20px;
+            width: 400px;
+            height: 400px;
+        }
     </style>
   </head>
 
@@ -25,6 +30,7 @@
     <div class="controls">
       <div class="control-group">
         <button onclick="clearCanvas()">Clear Canvas</button>
+        <button onclick="drawGeometricDesign()">Draw Geometric Design</button>
       </div>
       
       <div class="control-group">
@@ -60,13 +66,15 @@
       </div>
     </div>
 
+    <embed class="reference-pdf" src="pic.pdf" type="application/pdf">
+
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/webgl-debug.js"></script>
     <script src="lib/cuon-utils.js"></script>
     <script src="lib/cuon-matrix-cse160.js"></script>
-    <script src="js/shapes/Point.js"></script>
-    <script src="js/shapes/Triangle.js"></script>
-    <script src="js/shapes/Circle.js"></script>
+    <script src="js/Point.js"></script>
+    <script src="js/Triangle.js"></script>
+    <script src="js/Circle.js"></script>
     <script src="asg1.js"></script>
   </body>
 </html>

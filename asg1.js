@@ -67,6 +67,109 @@ function connectVariablesToGLSL() {
     }
 }
 
+function drawGeometricDesign() {
+    // Save current settings
+    const oldColor = currentColor;
+    const oldSize = currentSize;
+    const oldMode = currentMode;
+    
+    // Set color to white and adjust size
+    document.getElementById('redSlider').value = 100;
+    document.getElementById('greenSlider').value = 100;
+    document.getElementById('blueSlider').value = 100;
+    updateColor();
+    currentSize = 5; // Thin lines
+    
+    // Switch to triangle mode
+    setMode('triangle');
+
+    // Outer diamond
+    const triangleScale = 0.1;
+    shapesList.push(new Triangle([
+        0.0, 0.6,    // Top
+        -0.6, 0.0,   // Left
+        0.0, 0.0     // Center
+    ], currentColor, triangleScale));
+
+    shapesList.push(new Triangle([
+        0.0, 0.6,    // Top
+        0.6, 0.0,    // Right
+        0.0, 0.0     // Center
+    ], currentColor, triangleScale));
+
+    shapesList.push(new Triangle([
+        0.0, -0.6,   // Bottom
+        -0.6, 0.0,   // Left
+        0.0, 0.0     // Center
+    ], currentColor, triangleScale));
+
+    shapesList.push(new Triangle([
+        0.0, -0.6,   // Bottom
+        0.6, 0.0,    // Right
+        0.0, 0.0     // Center
+    ], currentColor, triangleScale));
+
+    // Left "notch" triangle
+    shapesList.push(new Triangle([
+        -0.4, 0.2,   // Top
+        -0.5, 0.0,   // Bottom left
+        -0.3, 0.0    // Bottom right
+    ], currentColor, triangleScale));
+
+    // Right "notch" triangle
+    shapesList.push(new Triangle([
+        0.4, 0.2,    // Top
+        0.3, 0.0,    // Bottom left
+        0.5, 0.0     // Bottom right
+    ], currentColor, triangleScale));
+
+    // Top small triangle
+    shapesList.push(new Triangle([
+        0.0, 0.1,    // Top
+        -0.1, -0.1,  // Bottom left
+        0.1, -0.1    // Bottom right
+    ], currentColor, triangleScale));
+
+    // Center arrangement - Left triangle
+    shapesList.push(new Triangle([
+        -0.2, -0.2,  // Left
+        -0.1, -0.3,  // Bottom
+        -0.1, -0.1   // Top
+    ], currentColor, triangleScale));
+
+    // Center arrangement - Right triangle
+    shapesList.push(new Triangle([
+        0.2, -0.2,   // Right
+        0.1, -0.3,   // Bottom
+        0.1, -0.1    // Top
+    ], currentColor, triangleScale));
+
+    // Center arrangement - Top triangle
+    shapesList.push(new Triangle([
+        0.0, -0.1,   // Top
+        -0.1, -0.2,  // Left
+        0.1, -0.2    // Right
+    ], currentColor, triangleScale));
+
+    // Center arrangement - Bottom triangle
+    shapesList.push(new Triangle([
+        0.0, -0.3,   // Bottom
+        -0.1, -0.2,  // Left
+        0.1, -0.2    // Right
+    ], currentColor, triangleScale));
+
+    // Render all shapes
+    renderAllShapes();
+
+    // Restore original settings
+    currentColor = oldColor;
+    currentSize = oldSize;
+    currentMode = oldMode;
+    document.getElementById('redSlider').value = oldColor[0] * 100;
+    document.getElementById('greenSlider').value = oldColor[1] * 100;
+    document.getElementById('blueSlider').value = oldColor[2] * 100;
+}
+
 function handleMouseDown(ev) {
     isDrawing = true;
     const rect = ev.target.getBoundingClientRect();
