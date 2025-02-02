@@ -12,10 +12,6 @@ var FSHADER_SOURCE =
   'precision mediump float;\n' +
   'uniform vec4 u_FragColor;\n' +
   'void main() {\n' +
-  '  vec2 distance = 2.0 * gl_PointCoord - 1.0;\n' +
-  '  if (length(distance) > 1.0) {\n' +
-  '      discard;\n' +
-  '  }\n' +
   '  gl_FragColor = u_FragColor;\n' +
   '}\n';
 
@@ -205,17 +201,18 @@ function addShape(x, y) {
             shapesList.push(new Point([x, y], color, currentSize));
             break;
         case 'triangle':
-            const size = currentSize / 100;
+            const triangleSize = currentSize / 50;
             shapesList.push(new Triangle([
-                x, y + size,
-                x - size, y - size,
-                x + size, y - size
+                x, y + triangleSize,              // Top vertex
+                x - triangleSize, y - triangleSize, // Bottom left vertex
+                x + triangleSize, y - triangleSize  // Bottom right vertex
             ], color, currentSize));
             break;
         case 'circle':
             shapesList.push(new Circle([x, y], color, currentSize, segments));
             break;
     }
+    renderAllShapes();
 }
 
 function renderAllShapes() {
