@@ -1,247 +1,173 @@
 // Vertex shader program
-var VSHADER_SOURCE =
-  'attribute vec4 a_Position;\n' +
-  'uniform float u_Size;\n' +
-  'void main() {\n' +
-  '  gl_Position = a_Position;\n' +
-  '  gl_PointSize = u_Size;\n' +
-  '}\n';
+const VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    uniform float u_Size;
+    void main() {
+        gl_Position = a_Position;
+        gl_PointSize = u_Size;
+    }
+`;
 
 // Fragment shader program
-var FSHADER_SOURCE =
-  'precision mediump float;\n' +
-  'uniform vec4 u_FragColor;\n' +
-  'void main() {\n' +
-  '  gl_FragColor = u_FragColor;\n' +
-  '}\n';
+const VFSHADER_SOURCE = `
+    precision mediump float;
+    uniform vec4 u_FragColor;
+    void main() {
+        gl_FragColor = u_FragColor;
+    }
+`;
 
 // Global variables
-var gl;
-var canvas;
-var a_Position;
-var u_FragColor;
-var u_Size;
-var shapesList = [];
-var currentMode = 'point';
-var currentColor = [1.0, 0.0, 0.0, 1.0];
-var currentSize = 10.0;
-var segments = 12;
-var isDrawing = false;
+let canvas;
+let gl;
+let a_Position;
+let u_FragColor;
+let u_Size;
+
+// Drawing state
+const POINT = 0;
+const TRIANGLE = 1;
+const CIRCLE = 2;
+
+let g_selectedType = POINT;
+let g_shapesList = [];
+let g_selectedColor = [1.0, 0.0, 0.0, 1.0];
+let g_selectedSize = 10;
+let g_segments = 10;
 
 function main() {
     setupWebGL();
     connectVariablesToGLSL();
-    canvas.onmousedown = handleMouseDown;
-    canvas.onmouseup = handleMouseUp;
-    canvas.onmousemove = handleMouseMove;
+    setupEventHandlers();
+
+    // Initialize canvas
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 }
 
 function setupWebGL() {
     canvas = document.getElementById('webgl');
-    gl = WebGLUtils.setupWebGL(canvas, { preserveDrawingBuffer: true });
+    gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
     if (!gl) {
-        console.log('Failed to get WebGL context');
+        console.error('Failed to get the WebGL context');
         return;
     }
 }
 
 function connectVariablesToGLSL() {
-    if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-        console.log('Failed to initialize shaders.');
+    if (!initShaders(gl, VSHADER_SOURCE, VFSHADER_SOURCE)) {
+        console.error('Failed to initialize shaders');
         return;
     }
-    
+
+    // Get locations of shader variables
     a_Position = gl.getAttribLocation(gl.program, 'a_Position');
     u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
     u_Size = gl.getUniformLocation(gl.program, 'u_Size');
-    
+
     if (a_Position < 0 || !u_FragColor || !u_Size) {
-        console.log('Failed to get storage locations');
+        console.error('Failed to get shader variable locations');
         return;
     }
 }
 
-function drawGeometricDesign() {
-    // Save current settings
-    const oldColor = currentColor;
-    const oldSize = currentSize;
-    const oldMode = currentMode;
+function setupEventHandlers() {
+    // Canvas events
+    canvas.onmousedown = handleClick;
+    canvas.onmousemove = function(ev) {
+        if (ev.buttons === 1) {
+            handleClick(ev);
+        }
+    };
+
+    // Button events
+    document.getElementById('clearCanvas').onclick = clearCanvas;
+    document.getElementById('pointButton').onclick = () => g_selectedType = POINT;
+    document.getElementById('triangleButton').onclick = () => g_selectedType = TRIANGLE;
+    document.getElementById('circleButton').onclick = () => g_selectedType = CIRCLE;
+
+    // Slider events with live updates
+    setupSlider('sizeSlider', 'sizeValue', (value) => {
+        g_selectedSize = parseInt(value);
+    });
+
+    setupSlider('segmentSlider', 'segmentValue', (value) => {
+        g_segments = parseInt(value);
+    });
+
+    const redSlider = document.getElementById('redSlider');
+    const greenSlider = document.getElementById('greenSlider');
+    const blueSlider = document.getElementById('blueSlider');
+    const redValue = document.getElementById('redValue');
+    const greenValue = document.getElementById('greenValue');
+    const blueValue = document.getElementById('blueValue');
+
+    redSlider.addEventListener('input', function() {
+        g_selectedColor[0] = this.value / 100;
+        redValue.innerHTML = this.value + '%';
+    });
+
+    greenSlider.addEventListener('input', function() {
+        g_selectedColor[1] = this.value / 100;
+        greenValue.innerHTML = this.value + '%';
+    });
+
+    blueSlider.addEventListener('input', function() {
+        g_selectedColor[2] = this.value / 100;
+        blueValue.innerHTML = this.value + '%';
+    });
+}
+
+function setupSlider(sliderId, valueId, callback, suffix = '') {
+    const slider = document.getElementById(sliderId);
+    const valueDisplay = document.getElementById(valueId);
     
-    // Set color to white and adjust size
-    document.getElementById('redSlider').value = 100;
-    document.getElementById('greenSlider').value = 100;
-    document.getElementById('blueSlider').value = 100;
-    updateColor();
-    currentSize = 5; // Thin lines
-    
-    // Switch to triangle mode
-    setMode('triangle');
-
-    // Outer diamond
-    const triangleScale = 0.1;
-    shapesList.push(new Triangle([
-        0.0, 0.6,    // Top
-        -0.6, 0.0,   // Left
-        0.0, 0.0     // Center
-    ], currentColor, triangleScale));
-
-    shapesList.push(new Triangle([
-        0.0, 0.6,    // Top
-        0.6, 0.0,    // Right
-        0.0, 0.0     // Center
-    ], currentColor, triangleScale));
-
-    shapesList.push(new Triangle([
-        0.0, -0.6,   // Bottom
-        -0.6, 0.0,   // Left
-        0.0, 0.0     // Center
-    ], currentColor, triangleScale));
-
-    shapesList.push(new Triangle([
-        0.0, -0.6,   // Bottom
-        0.6, 0.0,    // Right
-        0.0, 0.0     // Center
-    ], currentColor, triangleScale));
-
-    // Left "notch" triangle
-    shapesList.push(new Triangle([
-        -0.4, 0.2,   // Top
-        -0.5, 0.0,   // Bottom left
-        -0.3, 0.0    // Bottom right
-    ], currentColor, triangleScale));
-
-    // Right "notch" triangle
-    shapesList.push(new Triangle([
-        0.4, 0.2,    // Top
-        0.3, 0.0,    // Bottom left
-        0.5, 0.0     // Bottom right
-    ], currentColor, triangleScale));
-
-    // Top small triangle
-    shapesList.push(new Triangle([
-        0.0, 0.1,    // Top
-        -0.1, -0.1,  // Bottom left
-        0.1, -0.1    // Bottom right
-    ], currentColor, triangleScale));
-
-    // Center arrangement - Left triangle
-    shapesList.push(new Triangle([
-        -0.2, -0.2,  // Left
-        -0.1, -0.3,  // Bottom
-        -0.1, -0.1   // Top
-    ], currentColor, triangleScale));
-
-    // Center arrangement - Right triangle
-    shapesList.push(new Triangle([
-        0.2, -0.2,   // Right
-        0.1, -0.3,   // Bottom
-        0.1, -0.1    // Top
-    ], currentColor, triangleScale));
-
-    // Center arrangement - Top triangle
-    shapesList.push(new Triangle([
-        0.0, -0.1,   // Top
-        -0.1, -0.2,  // Left
-        0.1, -0.2    // Right
-    ], currentColor, triangleScale));
-
-    // Center arrangement - Bottom triangle
-    shapesList.push(new Triangle([
-        0.0, -0.3,   // Bottom
-        -0.1, -0.2,  // Left
-        0.1, -0.2    // Right
-    ], currentColor, triangleScale));
-
-    // Render all shapes
-    renderAllShapes();
-
-    // Restore original settings
-    currentColor = oldColor;
-    currentSize = oldSize;
-    currentMode = oldMode;
-    document.getElementById('redSlider').value = oldColor[0] * 100;
-    document.getElementById('greenSlider').value = oldColor[1] * 100;
-    document.getElementById('blueSlider').value = oldColor[2] * 100;
+    slider.oninput = function() {
+        valueDisplay.textContent = this.value + suffix;
+        callback(this.value);
+    };
 }
 
-function handleMouseDown(ev) {
-    isDrawing = true;
-    const rect = ev.target.getBoundingClientRect();
-    const x = ((ev.clientX - rect.left) / canvas.width) * 2 - 1;
-    const y = (1 - (ev.clientY - rect.top) / canvas.height) * 2 - 1;
-    addShape(x, y);
-    renderAllShapes();
-}
+function handleClick(ev) {
+    const [x, y] = convertCoordinatesEventToGL(ev);
+    let shape;
 
-function handleMouseUp() {
-    isDrawing = false;
-}
-
-function handleMouseMove(ev) {
-    if (!isDrawing) return;
-    const rect = ev.target.getBoundingClientRect();
-    const x = ((ev.clientX - rect.left) / canvas.width) * 2 - 1;
-    const y = (1 - (ev.clientY - rect.top) / canvas.height) * 2 - 1;
-    addShape(x, y);
-    renderAllShapes();
-}
-
-function addShape(x, y) {
-    const color = [
-        document.getElementById('redSlider').value / 100,
-        document.getElementById('greenSlider').value / 100,
-        document.getElementById('blueSlider').value / 100,
-        1.0
-    ];
-
-    switch (currentMode) {
-        case 'point':
-            shapesList.push(new Point([x, y], color, currentSize));
+    switch(g_selectedType) {
+        case POINT:
+            shape = new Point([x, y], g_selectedColor.slice(), g_selectedSize);
             break;
-        case 'triangle':
-            const triangleSize = currentSize / 50;
-            shapesList.push(new Triangle([
-                x, y + triangleSize,              // Top vertex
-                x - triangleSize, y - triangleSize, // Bottom left vertex
-                x + triangleSize, y - triangleSize  // Bottom right vertex
-            ], color, currentSize));
+        case TRIANGLE:
+            shape = new Triangle();
+            shape.position = [x, y];
+            shape.color = g_selectedColor.slice();
+            shape.size = g_selectedSize;
             break;
-        case 'circle':
-            shapesList.push(new Circle([x, y], color, currentSize, segments));
+        case CIRCLE:
+            shape = new Circle();
+            shape.position = [x, y];
+            shape.color = g_selectedColor.slice();
+            shape.size = g_selectedSize;
+            shape.segments = g_segments;
             break;
     }
+
+    g_shapesList.push(shape);
     renderAllShapes();
+}
+
+function convertCoordinatesEventToGL(ev) {
+    const rect = ev.target.getBoundingClientRect();
+    const x = ((ev.clientX - rect.left) - canvas.width/2) / (canvas.width/2);
+    const y = (canvas.height/2 - (ev.clientY - rect.top)) / (canvas.height/2);
+    return [x, y];
 }
 
 function renderAllShapes() {
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    shapesList.forEach(shape => shape.render());
+    //gl.clear(gl.COLOR_BUFFER_BIT);
+    g_shapesList.forEach(shape => shape.render());
 }
 
 function clearCanvas() {
-    shapesList = [];
+    g_shapesList = [];
     gl.clear(gl.COLOR_BUFFER_BIT);
-}
-
-function setMode(mode) {
-    currentMode = mode;
-}
-
-function updateSize() {
-    currentSize = document.getElementById('sizeSlider').value;
-}
-
-function updateColor() {
-    currentColor = [
-        document.getElementById('redSlider').value / 100,
-        document.getElementById('greenSlider').value / 100,
-        document.getElementById('blueSlider').value / 100,
-        1.0
-    ];
-}
-
-function updateSegments() {
-    segments = document.getElementById('segmentsSlider').value;
 }
